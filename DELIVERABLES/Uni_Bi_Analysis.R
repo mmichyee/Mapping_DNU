@@ -116,8 +116,8 @@ df.covidcorrsigcode=data.frame(covidcorr$P)
 write.csv(df.covidcorr, file = "GIS/TRIMMED MAP/fulljoincorr_covid.csv")
 write.csv(df.covidcorrsig, file = "GIS/TRIMMED MAP/fulljoincorrsig_covid.csv")
 
-# Factor analysis -------------------------------------------------
-sigonly <- read.csv("GIS/TRIMMED MAP/SVI_ACS_500Cities_TrimmedJoinSIGONLY2.csv")
+# Factor analysis (backwards) -------------------------------------------------
+sigonly <- read.csv("GIS/TRIMMED MAP/SVI_ACS_500Cities_TrimmedJoinSIGONLY.csv")
 
 cleandata <- sigonly[-c(1)] # drop census tract column
 
@@ -129,7 +129,7 @@ paran(cleandata, iterations=0, centile=0, quietly=FALSE,
       color=TRUE, col=c("black","red","blue"), 
       lty=c(1,2,3), lwd=1, legend=TRUE, file="", 
       width=640, height=640, grdevice="png", seed=0, mat=NA, n=NA)
-##4 factor groups
+##3 factor groups
 
 
 #also check scree plott with psych package
@@ -142,28 +142,54 @@ factors <- fa.parallel(cleandata,
                        n.iter = 50,
                        SMC = TRUE,
                        quant = .95)
-##4 factor groups
+##3 factor groups
 
 
 #try out 2 groups? for comparison
-fit <- factanal(cleandata, factors = 2, lower = 0.05)
+fit <- factanal(cleandata, factors = 2, rotaion ="varimax", lower = 0.02)
 print(fit)
 #visualization
 fitplot <- fit$loadings[,1:2] 
 plot(fitplot,type="n") # set up plot 
 text(fitplot,labels=names(cleandata),cex=.7) # add variable names
 
-fit3 <- factanal(cleandata, factors = 3, lower = 0.01)
+fit3 <- factanal(cleandata, factors = 3, rotaion ="varimax", lower = 0.02)
 print(fit3)
 
-fit4 <- factanal(cleandata, factors = 4, lower = 0.02)
+fit4 <- factanal(cleandata, factors = 3, rotaion ="varimax", lower = 0.02)
 print(fit4)
-fit4plot <- fit4$loadings[,1:2] #non-signficant model
-fit4plot <- fit4$loadings[,2:3] #non-signficant model
-fit4plot <- fit4$loadings[,3:4] #non-signficant model
-plot(fit4plot,type="n") # set up plot 
-text(fit4plot,labels=names(cleandata),cex=.7) # add variable names
+
+fit3export <- fit3$loadings[,1:3] 
+write.csv(fit4export, file = "GIS/TRIMMED MAP/fulljoin_factorloading.csv")
 
 
-fit4export <- fit4$loadings[,1:4] 
+# Factor analysis (forwards) -------------------------------------------------
+# START WITH POVERTY - ADD NEW FACTORS BASED ON CORR AND MORAN'S I
+sigonly <- read.csv("GIS/TRIMMED MAP/SVI_ACS_500Cities_TrimmedJoinFORWARD.csv")
+
+cleandata <- sigonly[-c(1)] # drop census tract column
+
+#check # of factor groups - only with many factors
+factors <- fa.parallel(cleandata,
+                       fm = 'ml',
+                       fa = 'fa',
+                       n.iter = 50,
+                       SMC = TRUE,
+                       quant = .95)
+
+#try out 2 groups? for comparison
+fitfwd <- factanal(cleandata, factors = 2, rotaion ="varimax", lower = 0.02)
+print(fitfwd)
+#visualization
+fitplotfwd <- fitfwd$loadings[,1:2] 
+plot(fitplotfwd,type="n") # set up plot 
+text(fitplotfwd,labels=names(cleandata),cex=.7) # add variable names
+
+fit3 <- factanal(cleandata, factors = 3, rotaion ="varimax", lower = 0.02)
+print(fit3)
+
+fit4 <- factanal(cleandata, factors = 3, rotaion ="varimax", lower = 0.02)
+print(fit4)
+
+fit3export <- fit3$loadings[,1:3] 
 write.csv(fit4export, file = "GIS/TRIMMED MAP/fulljoin_factorloading.csv")
